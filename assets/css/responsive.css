@@ -1,0 +1,296 @@
+/* =====================================================
+   SMART QUEUE SYSTEM - RESPONSIVE STYLESHEET
+   Media queries untuk mobile, tablet, dan desktop
+   ===================================================== */
+
+/* ===== TABLET (768px - 1023px) ===== */
+@media (max-width: 1023px) {
+    .sidebar {
+        width: 200px;
+    }
+    
+    .main-content {
+        margin-left: 200px;
+    }
+    
+    .sidebar-menu h3 {
+        padding: 15px 15px 8px 15px;
+        font-size: 12px;
+    }
+    
+    .sidebar-menu li a {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+    
+    .content-area {
+        padding: 20px;
+    }
+    
+    .content-area h1 {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+    
+    .stats-row,
+    .charts-row,
+    .poli-tabs {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ===== MOBILE (max-width: 767px) ===== */
+@media (max-width: 767px) {
+    /* Navigation */
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding: 10px 0;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        flex-direction: column;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .header {
+        padding: 12px 15px;
+    }
+    
+    .user-menu {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+    
+    /* Sidebar menu */
+    .sidebar-menu h3 {
+        padding: 12px 15px 6px 15px;
+        font-size: 11px;
+    }
+    
+    .sidebar-menu ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0;
+    }
+    
+    .sidebar-menu li {
+        flex: 1;
+        min-width: 100px;
+    }
+    
+    .sidebar-menu li a {
+        padding: 8px 10px;
+        font-size: 12px;
+        text-align: center;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+    }
+    
+    .sidebar-menu li a:hover,
+    .sidebar-menu li a.active {
+        border-left: none;
+        border-bottom-color: var(--primary);
+        background: rgba(44, 123, 229, 0.1);
+    }
+    
+    /* Content */
+    .content-area {
+        padding: 15px;
+    }
+    
+    .content-area h1 {
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+    
+    /* Cards */
+    .card {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .card h3 {
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+    
+    /* Stats */
+    .stats-row,
+    .charts-row,
+    .poli-tabs {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-card {
+        padding: 15px;
+    }
+    
+    .stat-value {
+        font-size: 28px;
+    }
+    
+    /* Forms */
+    .form-group {
+        margin-bottom: 12px;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    label {
+        margin-bottom: 4px;
+        font-size: 13px;
+    }
+    
+    .form-control {
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+    
+    /* Buttons */
+    .btn {
+        padding: 10px 15px;
+        font-size: 13px;
+    }
+    
+    .btn-sm {
+        padding: 5px 10px;
+        font-size: 11px;
+    }
+    
+    .queue-controls {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .queue-controls .btn {
+        min-width: auto;
+    }
+    
+    /* Tables */
+    .table-responsive {
+        margin-bottom: 15px;
+    }
+    
+    .table {
+        font-size: 12px;
+    }
+    
+    .table th {
+        padding: 8px 10px;
+        font-size: 11px;
+    }
+    
+    .table td {
+        padding: 8px 10px;
+    }
+    
+    /* Login/Register */
+    .login-box,
+    .register-box {
+        padding: 25px;
+        margin: 15px;
+    }
+    
+    .login-box h1,
+    .register-box h1 {
+        font-size: 20px;
+    }
+    
+    .login-box p,
+    .register-box p {
+        margin-bottom: 20px;
+        font-size: 13px;
+    }
+    
+    /* Charts */
+    .chart-container {
+        padding: 15px;
+    }
+    
+    .chart-container h3 {
+        font-size: 14px;
+        margin-bottom: 15px;
+    }
+    
+    canvas {
+        max-height: 250px;
+    }
+}
+
+/* ===== EXTRA SMALL (max-width: 480px) ===== */
+@media (max-width: 480px) {
+    .sidebar-menu li {
+        min-width: 80px;
+    }
+    
+    .sidebar-menu li a {
+        padding: 6px 8px;
+        font-size: 11px;
+    }
+    
+    .content-area {
+        padding: 10px;
+    }
+    
+    .content-area h1 {
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+    
+    .card {
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    .header .logo h2 {
+        font-size: 16px;
+    }
+    
+    .user-menu {
+        gap: 10px;
+    }
+    
+    .user-name,
+    .user-role {
+        font-size: 12px;
+    }
+}
+
+/* ===== LANDSCAPE MODE ===== */
+@media (max-height: 600px) and (orientation: landscape) {
+    .sidebar {
+        height: auto;
+        overflow-y: visible;
+    }
+    
+    .content-area {
+        padding: 15px;
+    }
+    
+    .stats-row {
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+}
+

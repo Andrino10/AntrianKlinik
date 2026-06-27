@@ -1,0 +1,70 @@
+# .gitignore - Smart Queue System
+
+# Environment
+.env
+.env.local
+.env.*.local
+config/database.php
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+
+# OS
+Thumbs.db
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# PHP
+*.log
+!*.log/
+*.phar
+.phar
+
+# Session
+session/
+tmp/
+cache/
+
+# Database
+*.sql
+!database/smart_queue.sql
+database/backups/
+*.db
+*.sqlite
+
+# Vendor (jika menggunakan composer)
+vendor/
+composer.lock
+
+# Node (jika menggunakan npm/yarn)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Backup files
+*.backup
+*.bak
+~*
+*.tmp
+
+# Compiled assets
+dist/
+build/
+
+# Logs
+logs/
+npm-debug.log
+yarn-error.log
+
+# OS specific
+.env.production
+.htaccess.local
+web.config.local

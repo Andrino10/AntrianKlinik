@@ -17,46 +17,77 @@ check_auth(['admin']);
 $stmt = $pdo->query('SELECT COUNT(*) as total FROM patients');
 $total_patients = $stmt->fetch()['total'];
 
-$stmt = $pdo->query('SELECT COUNT(*) as total FROM queues WHERE tanggal = CURDATE()');
-$total_today = $stmt->fetch()['total'];
+// Gabungkan query statistik antrean hari ini dalam satu query (kondisional)
+$stats_stmt = $pdo->query("
+    SELECT 
+        COUNT(*) as total_today,
+        SUM(status = 'selesai') as completed_today,
+        SUM(status = 'dibatalkan') as cancelled_today,
+        SUM(status = 'tidak_hadir') as no_show_today
+    FROM queues 
+    WHERE tanggal = CURDATE()
+");
+$stats_today = $stats_stmt->fetch();
 
-$stmt = $pdo->query('SELECT COUNT(*) as total FROM queues WHERE tanggal = CURDATE() AND status = "selesai"');
-$completed_today = $stmt->fetch()['total'];
+$total_today = (int) ($stats_today['total_today'] ?? 0);
+$completed_today = (int) ($stats_today['completed_today'] ?? 0);
+$cancelled_today = (int) ($stats_today['cancelled_today'] ?? 0);
+$no_show_today = (int) ($stats_today['no_show_today'] ?? 0);
 
-$stmt = $pdo->query('SELECT COUNT(*) as total FROM queues WHERE tanggal = CURDATE() AND status = "dibatalkan"');
-$cancelled_today = $stmt->fetch()['total'];
-
-$stmt = $pdo->query('SELECT COUNT(*) as total FROM queues WHERE tanggal = CURDATE() AND status = "tidak_hadir"');
-$no_show_today = $stmt->fetch()['total'];
-
-// Data untuk grafik: antrean per poli hari ini
+// Data untuk grafik 1: antrean per poli hari ini (menampilkan semua poli aktif, termasuk yang kosong / 0)
 $stmt = $pdo->query('
     SELECT p.nama_poli, COUNT(q.id) as total 
-    FROM queues q 
-    JOIN poli p ON q.poli_id = p.id 
-    WHERE q.tanggal = CURDATE() 
-    GROUP BY q.poli_id, p.nama_poli
+    FROM poli p
+    LEFT JOIN queues q ON p.id = q.poli_id AND q.tanggal = CURDATE() 
+    WHERE p.is_active = 1
+    GROUP BY p.id, p.nama_poli
 ');
 $queue_per_poli = $stmt->fetchAll();
 
-// Data untuk grafik: tren 7 hari terakhir
+// Data untuk grafik 2: tren 7 hari terakhir (memastikan tidak ada gap tanggal kosong)
+$dates = [];
+for ($i = 6; $i >= 0; $i--) {
+    $d = date('Y-m-d', strtotime("-$i days"));
+    $dates[$d] = 0;
+}
 $stmt = $pdo->query('
     SELECT tanggal, COUNT(*) as total 
     FROM queues 
     WHERE tanggal >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) 
-    GROUP BY tanggal 
-    ORDER BY tanggal ASC
+    GROUP BY tanggal
 ');
-$trend_7days = $stmt->fetchAll();
+while ($row = $stmt->fetch()) {
+    $dates[$row['tanggal']] = (int) $row['total'];
+}
+$trend_labels = [];
+$trend_data = [];
+foreach ($dates as $tgl => $tot) {
+    $trend_labels[] = date('d/m', strtotime($tgl)); // Tampilan format tanggal ringkas (dd/mm)
+    $trend_data[] = $tot;
+}
 
-// Data untuk grafik: distribusi status hari ini
+// Data untuk grafik 3: distribusi status antrean hari ini (memastikan semua status terpetakan)
+$statuses = [
+    'menunggu' => 0,
+    'dipanggil' => 0,
+    'dalam_pemeriksaan' => 0,
+    'selesai' => 0,
+    'tidak_hadir' => 0,
+    'dibatalkan' => 0
+];
 $stmt = $pdo->query('
     SELECT status, COUNT(*) as total 
     FROM queues 
     WHERE tanggal = CURDATE() 
     GROUP BY status
 ');
-$status_distribution = $stmt->fetchAll();
+while ($row = $stmt->fetch()) {
+    if (isset($statuses[$row['status']])) {
+        $statuses[$row['status']] = (int) $row['total'];
+    }
+}
+$status_labels = array_keys($statuses);
+$status_data = array_values($statuses);
 
 ?>
 <!DOCTYPE html>
@@ -144,12 +175,12 @@ $status_distribution = $stmt->fetchAll();
         const poliData = <?php echo json_encode(array_column($queue_per_poli, 'total')); ?>;
         
         // Data untuk trend 7 hari
-        const trendLabels = <?php echo json_encode(array_column($trend_7days, 'tanggal')); ?>;
-        const trendData = <?php echo json_encode(array_column($trend_7days, 'total')); ?>;
+        const trendLabels = <?php echo json_encode($trend_labels); ?>;
+        const trendData = <?php echo json_encode($trend_data); ?>;
         
         // Data untuk status
-        const statusLabels = <?php echo json_encode(array_column($status_distribution, 'status')); ?>;
-        const statusData = <?php echo json_encode(array_column($status_distribution, 'total')); ?>;
+        const statusLabels = <?php echo json_encode($status_labels); ?>;
+        const statusData = <?php echo json_encode($status_data); ?>;
         
         // Initialize charts
         initializeCharts(poliLabels, poliData, trendLabels, trendData, statusLabels, statusData);

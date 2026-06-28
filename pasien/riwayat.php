@@ -22,10 +22,11 @@ $patient = $stmt->fetch();
 
 // Ambil riwayat kunjungan
 $stmt = $pdo->prepare('
-    SELECT q.*, p.nama_poli, sr.waktu_mulai, sr.waktu_selesai, sr.catatan 
+    SELECT q.*, p.nama_poli, sr.waktu_mulai, sr.waktu_selesai, sr.catatan, u.nama AS nama_dokter 
     FROM queues q 
     LEFT JOIN poli p ON q.poli_id = p.id 
     LEFT JOIN service_records sr ON q.id = sr.queue_id 
+    LEFT JOIN users u ON sr.dokter_id = u.id
     WHERE q.pasien_id = ? 
     ORDER BY q.tanggal DESC, q.jam_daftar DESC
 ');
@@ -65,7 +66,8 @@ $history = $stmt->fetchAll();
                                     <th>Poli</th>
                                     <th>Nomor Antrean</th>
                                     <th>Status</th>
-                                    <th>Estimasi Waktu</th>
+                                    <th>Dokter</th>
+                                    <th>Catatan Dokter / Resep</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -76,10 +78,21 @@ $history = $stmt->fetchAll();
                                         <td><?php echo htmlspecialchars($h['nomor_antrian']); ?></td>
                                         <td>
                                             <span class="badge badge-<?php echo $h['status']; ?>">
-                                                <?php echo ucfirst($h['status']); ?>
+                                                <?php 
+                                                    $status_labels = [
+                                                        'menunggu' => 'Menunggu',
+                                                        'dipanggil' => 'Dipanggil',
+                                                        'dalam_pemeriksaan' => 'Dalam Pemeriksaan',
+                                                        'selesai' => 'Selesai',
+                                                        'tidak_hadir' => 'Tidak Hadir',
+                                                        'dibatalkan' => 'Batal'
+                                                    ];
+                                                    echo htmlspecialchars($status_labels[$h['status']] ?? $h['status']); 
+                                                ?>
                                             </span>
                                         </td>
-                                        <td><?php echo $h['estimasi_waktu'] ?? '-'; ?></td>
+                                        <td><?php echo htmlspecialchars($h['nama_dokter'] ?? '-'); ?></td>
+                                        <td><?php echo nl2br(htmlspecialchars($h['catatan'] ?? '-')); ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>

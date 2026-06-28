@@ -32,12 +32,25 @@ $stmt = $pdo->prepare('
     JOIN poli p ON q.poli_id = p.id 
     WHERE q.pasien_id = ? 
     AND q.tanggal = CURDATE() 
-    AND q.status IN ("menunggu", "dipanggil")
+    AND q.status IN ("menunggu", "dipanggil", "dalam_pemeriksaan")
     LIMIT 1
 ');
 $stmt->execute([$patient['id']]);
 $active_queue = $stmt->fetch();
 
+// Ambil pemeriksaan/layanan terakhir yang selesai beserta catatan dokter
+$stmt = $pdo->prepare('
+    SELECT q.nomor_antrian, q.tanggal, pol.nama_poli, sr.waktu_selesai, sr.catatan, u.nama AS nama_dokter
+    FROM queues q
+    JOIN poli pol ON q.poli_id = pol.id
+    JOIN service_records sr ON q.id = sr.queue_id
+    JOIN users u ON sr.dokter_id = u.id
+    WHERE q.pasien_id = ? AND q.status = "selesai"
+    ORDER BY q.tanggal DESC, sr.waktu_selesai DESC
+    LIMIT 1
+');
+$stmt->execute([$patient['id']]);
+$last_service = $stmt->fetch();
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -80,7 +93,20 @@ $active_queue = $stmt->fetch();
                         <a href="ambil_antrian.php" class="btn btn-primary">Ambil Antrean</a>
                     </div>
                 <?php endif; ?>
-                
+
+                <?php if ($last_service): ?>
+                    <div class="card" style="border-left: 4px solid var(--success); background: linear-gradient(to right, rgba(0, 217, 126, 0.05), white);">
+                        <h3>📩 Catatan Pemeriksaan Terakhir Anda</h3>
+                        <p><strong>Poli:</strong> <?php echo htmlspecialchars($last_service['nama_poli']); ?></p>
+                        <p><strong>Tanggal Layanan:</strong> <?php echo date('d-m-Y', strtotime($last_service['tanggal'])); ?></p>
+                        <p><strong>Dokter Pemeriksa:</strong> <?php echo htmlspecialchars($last_service['nama_dokter']); ?></p>
+                        <p><strong>Pesan/Catatan Dokter:</strong></p>
+                        <blockquote style="margin: 10px 0; padding: 12px 15px; background: var(--light); border-left: 3px solid var(--success); border-radius: 4px; font-style: italic; color: #374151;">
+                            <?php echo nl2br(htmlspecialchars($last_service['catatan'] ?? 'Tidak ada catatan khusus.')); ?>
+                        </blockquote>
+                    </div>
+                <?php endif; ?>
+
                 <div class="card">
                     <h3>Menu</h3>
                     <ul>

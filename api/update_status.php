@@ -1,46 +1,44 @@
 <?php
-/**
- * API: Update Status Antrean
- * Mengubah status antrean sesuai permintaan
- * 
- * @package Smart Queue System
- * @subpackage API
- */
-
-header('Content-Type: application/json');
-
 require_once '../config/database.php';
-require_once '../includes/auth_middleware.php';
+require_once '../includes/api_helpers.php';
 
-check_auth(['petugas', 'dokter', 'admin']);
+api_require_method('POST');
+api_require_auth(['petugas', 'dokter', 'admin']);
+api_require_csrf();
+
+$queueId = positive_int($_POST['queue_id'] ?? null);
+$newStatus = $_POST['status'] ?? '';
+$validStatuses = ['dipanggil', 'dalam_pemeriksaan', 'selesai', 'tidak_hadir', 'dibatalkan'];
+if (!$queueId || !in_array($newStatus, $validStatuses, true)) {
+    api_response(false, ['message' => 'Queue ID atau status tidak valid'], 422);
+}
 
 try {
-    $queue_id = $_POST['queue_id'] ?? null;
-    $new_status = $_POST['status'] ?? null;
-    
-    if (!$queue_id || !$new_status) {
-        throw new Exception('Data tidak lengkap');
+    $pdo->beginTransaction();
+    $stmt = $pdo->prepare('SELECT id, status FROM queues WHERE id=? AND tanggal=CURDATE() FOR UPDATE');
+    $stmt->execute([$queueId]);
+    $queue = $stmt->fetch();
+    if (!$queue) throw new DomainException('Antrean hari ini tidak ditemukan');
+
+    $transitions = [
+        'menunggu' => ['dibatalkan'],
+        'dipanggil' => ['dipanggil', 'dalam_pemeriksaan', 'tidak_hadir', 'dibatalkan'],
+        'dalam_pemeriksaan' => ['selesai', 'dibatalkan'],
+        'selesai' => [], 'tidak_hadir' => [], 'dibatalkan' => [],
+    ];
+    if (!in_array($newStatus, $transitions[$queue['status']] ?? [], true)) {
+        throw new DomainException('Perubahan status dari ' . $queue['status'] . ' ke ' . $newStatus . ' tidak diizinkan');
     }
-    
-    // Validasi status yang diizinkan
-    $valid_statuses = ['menunggu', 'dipanggil', 'dalam_pemeriksaan', 'selesai', 'tidak_hadir', 'dibatalkan'];
-    if (!in_array($new_status, $valid_statuses)) {
-        throw new Exception('Status tidak valid');
-    }
-    
-    // Update status
-    $stmt = $pdo->prepare("UPDATE queues SET status = ? WHERE id = ?");
-    $stmt->execute([$new_status, $queue_id]);
-    
-    echo json_encode([
-        'success' => true,
-        'message' => 'Status antrean berhasil diperbarui'
-    ]);
-    
-} catch (Exception $e) {
-    echo json_encode([
-        'success' => false,
-        'message' => $e->getMessage()
-    ]);
+
+    $update = $pdo->prepare('UPDATE queues SET status=? WHERE id=?');
+    $update->execute([$newStatus, $queueId]);
+    $pdo->commit();
+    api_response(true, ['message' => 'Status antrean berhasil diperbarui']);
+} catch (DomainException $e) {
+    if ($pdo->inTransaction()) $pdo->rollBack();
+    api_response(false, ['message' => $e->getMessage()], 409);
+} catch (Throwable $e) {
+    if ($pdo->inTransaction()) $pdo->rollBack();
+    error_log($e->getMessage());
+    api_response(false, ['message' => 'Gagal memperbarui status antrean'], 500);
 }
-?>

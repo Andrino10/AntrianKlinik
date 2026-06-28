@@ -40,6 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if ($user && password_verify($password, $user['password'])) {
                 // Login berhasil
+                session_regenerate_id(true);
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['nama'] = $user['nama'];
                 $_SESSION['email'] = $user['email'];

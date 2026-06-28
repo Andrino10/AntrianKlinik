@@ -13,21 +13,10 @@ require_once '../includes/auth_middleware.php';
 
 check_auth(['petugas', 'admin']);
 
-// Ambil statistik
-$stmt = $pdo->query('SELECT COUNT(*) as total FROM patients');
-$total_patients = $stmt->fetch()['total'];
-
-$stmt = $pdo->query('SELECT COUNT(*) as total FROM queues WHERE tanggal = CURDATE()');
-$total_today = $stmt->fetch()['total'];
-
-$stmt = $pdo->query('SELECT COUNT(*) as total FROM queues WHERE tanggal = CURDATE() AND status = "selesai"');
-$completed_today = $stmt->fetch()['total'];
-
-$stmt = $pdo->query('SELECT COUNT(*) as total FROM queues WHERE tanggal = CURDATE() AND status = "dibatalkan"');
-$cancelled_today = $stmt->fetch()['total'];
-
-$stmt = $pdo->query('SELECT COUNT(*) as total FROM queues WHERE tanggal = CURDATE() AND status = "tidak_hadir"');
-$no_show_today = $stmt->fetch()['total'];
+$stats = $pdo->query("SELECT COUNT(*) total_today, SUM(status='menunggu') waiting_today,
+    SUM(status='dipanggil') called_today, SUM(status='selesai') completed_today,
+    SUM(status='dibatalkan') cancelled_today, SUM(status='tidak_hadir') no_show_today
+    FROM queues WHERE tanggal=CURDATE()")->fetch();
 
 ?>
 <!DOCTYPE html>
@@ -51,31 +40,33 @@ $no_show_today = $stmt->fetch()['total'];
                 
                 <div class="stats-row">
                     <div class="stat-card">
-                        <h3>Total Pasien Terdaftar</h3>
-                        <p class="stat-value"><?php echo $total_patients; ?></p>
+                        <h3>Jumlah Antrean Hari Ini</h3>
+                        <p class="stat-value" data-dashboard-stat="total_today"><?php echo (int) $stats['total_today']; ?></p>
                     </div>
                     
                     <div class="stat-card">
-                        <h3>Total Antrean Hari Ini</h3>
-                        <p class="stat-value"><?php echo $total_today; ?></p>
+                        <h3>Sedang Dipanggil</h3>
+                        <p class="stat-value" data-dashboard-stat="called_today"><?php echo (int) $stats['called_today']; ?></p>
                     </div>
                     
                     <div class="stat-card">
-                        <h3>Pasien Selesai</h3>
-                        <p class="stat-value"><?php echo $completed_today; ?></p>
+                        <h3>Menunggu</h3>
+                        <p class="stat-value" data-dashboard-stat="waiting_today"><?php echo (int) $stats['waiting_today']; ?></p>
                     </div>
                 </div>
                 
                 <div class="stats-row">
                     <div class="stat-card">
-                        <h3>Pembatalan</h3>
-                        <p class="stat-value"><?php echo $cancelled_today; ?></p>
+                        <h3>Selesai</h3>
+                        <p class="stat-value" data-dashboard-stat="completed_today"><?php echo (int) $stats['completed_today']; ?></p>
                     </div>
                     
                     <div class="stat-card">
                         <h3>Tidak Hadir</h3>
-                        <p class="stat-value"><?php echo $no_show_today; ?></p>
+                        <p class="stat-value" data-dashboard-stat="no_show_today"><?php echo (int) $stats['no_show_today']; ?></p>
                     </div>
+                    <div class="stat-card"><h3>Dibatalkan</h3><p class="stat-value" data-dashboard-stat="cancelled_today"><?php echo (int) $stats['cancelled_today']; ?></p></div>
+                    <div class="stat-card"><h3>Estimasi Tunggu</h3><p class="stat-value"><span data-dashboard-stat="estimated_wait_minutes">0</span> menit</p></div>
                 </div>
                 
                 <div class="card">
@@ -90,5 +81,6 @@ $no_show_today = $stmt->fetch()['total'];
     </div>
     
     <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/dashboard.js"></script>
 </body>
 </html>

@@ -170,20 +170,26 @@
     <script>
         // Update monitoring setiap 5 detik
         let pollingInterval = null;
-        
-        function updateMonitoring() {
-            fetch('api/queue_status.php')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('current-queue-number').textContent = data.current_number || '-';
-                        document.getElementById('remaining-queue').textContent = data.remaining_queue || 0;
-                        document.getElementById('total-queue-today').textContent = data.total_today || 0;
-                        document.getElementById('update-timestamp').textContent = 
-                            new Date(data.timestamp).toLocaleTimeString('id-ID');
-                    }
-                })
-                .catch(error => console.error('Error:', error));
+        let monitoringController = null;
+
+        async function updateMonitoring() {
+            monitoringController?.abort();
+            monitoringController = new AbortController();
+            try {
+                const response = await fetch('api/queue_status.php', {
+                    headers: { Accept: 'application/json' },
+                    signal: monitoringController.signal
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.message || 'Gagal mengambil antrean');
+                document.getElementById('current-queue-number').textContent = data.current_number || '-';
+                document.getElementById('next-queue-number').textContent = data.next_number || '-';
+                document.getElementById('remaining-queue').textContent = data.remaining_queue || 0;
+                document.getElementById('total-queue-today').textContent = data.total_today || 0;
+                document.getElementById('update-timestamp').textContent = new Date(data.timestamp).toLocaleTimeString('id-ID');
+            } catch (error) {
+                if (error.name !== 'AbortError') console.error('Monitoring:', error);
+            }
         }
         
         // Update langsung saat halaman dimuat
@@ -191,6 +197,17 @@
         
         // Polling setiap 5 detik
         pollingInterval = setInterval(updateMonitoring, 5000);
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                monitoringController?.abort();
+            } else if (!pollingInterval) {
+                updateMonitoring();
+                pollingInterval = setInterval(updateMonitoring, 5000);
+            }
+        });
     </script>
 </body>
 </html>

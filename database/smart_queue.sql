@@ -1,13 +1,5 @@
--- =====================================================
--- Smart Queue System - Database Schema
--- Sistem Antrean Digital Klinik/Puskesmas
--- =====================================================
+SET FOREIGN_KEY_CHECKS=0;
 
--- Create Database
-CREATE DATABASE IF NOT EXISTS `smart_queue` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `smart_queue`;
-
--- ===== TABLE: users =====
 CREATE TABLE `users` (
     `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `nama` VARCHAR(100) NOT NULL,
@@ -103,38 +95,4 @@ INSERT INTO `users` (`nama`, `email`, `password`, `role`, `is_active`) VALUES
 INSERT INTO `patients` (`nik`, `nama`, `tanggal_lahir`, `jenis_kelamin`, `no_hp`, `alamat`, `user_id`) VALUES
 ('1234567890123456', 'Budi Santoso', '1990-05-15', 'L', '081234567890', 'Jl. Merdeka No. 1, Jakarta', 4);
 
--- ===== VIEWS & STORED PROCEDURES =====
-
--- View: Queue Summary Hari Ini
-CREATE OR REPLACE VIEW `v_queue_summary_today` AS
-SELECT 
-    p.id AS poli_id,
-    p.nama_poli,
-    COUNT(q.id) AS total_queue,
-    SUM(CASE WHEN q.status = 'menunggu' THEN 1 ELSE 0 END) AS waiting,
-    SUM(CASE WHEN q.status = 'dipanggil' THEN 1 ELSE 0 END) AS called,
-    SUM(CASE WHEN q.status = 'dalam_pemeriksaan' THEN 1 ELSE 0 END) AS in_service,
-    SUM(CASE WHEN q.status = 'selesai' THEN 1 ELSE 0 END) AS completed,
-    SUM(CASE WHEN q.status = 'dibatalkan' THEN 1 ELSE 0 END) AS cancelled,
-    SUM(CASE WHEN q.status = 'tidak_hadir' THEN 1 ELSE 0 END) AS no_show
-FROM `poli` p
-LEFT JOIN `queues` q ON p.id = q.poli_id AND q.tanggal = CURDATE()
-WHERE p.is_active = 1
-GROUP BY p.id, p.nama_poli;
-
--- ===== INDEXES untuk Performance =====
-CREATE INDEX `idx_queues_tanggal_poli` ON `queues` (`tanggal`, `poli_id`);
-CREATE INDEX `idx_queues_tanggal_status` ON `queues` (`tanggal`, `status`);
-CREATE INDEX `idx_patients_user_id` ON `patients` (`user_id`);
-
--- ===== ALTER TABLE untuk Foreign Key =====
-ALTER TABLE `patients` ADD CONSTRAINT `fk_patients_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
-COMMIT;
-
--- ===== DATABASE READY =====
--- Gunakan query berikut untuk test koneksi:
--- SELECT VERSION();
--- SELECT * FROM poli;
--- SELECT * FROM users WHERE role = 'admin';
-
+SET FOREIGN_KEY_CHECKS=1;

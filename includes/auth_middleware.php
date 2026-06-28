@@ -37,9 +37,26 @@ function check_auth($allowed_roles = []) {
 function get_base_url() {
     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'];
-    $project_folder = basename(dirname(__DIR__));
     
-    return $protocol . '://' . $host . '/' . $project_folder;
+    $script_name = $_SERVER['SCRIPT_NAME'] ?? '';
+    $dir = str_replace('\\', '/', dirname($script_name));
+    
+    $project_path = '';
+    if (strpos($dir, '/pasien') !== false) {
+        $project_path = substr($dir, 0, strpos($dir, '/pasien'));
+    } elseif (strpos($dir, '/dokter') !== false) {
+        $project_path = substr($dir, 0, strpos($dir, '/dokter'));
+    } elseif (strpos($dir, '/petugas') !== false) {
+        $project_path = substr($dir, 0, strpos($dir, '/petugas'));
+    } elseif (strpos($dir, '/admin') !== false) {
+        $project_path = substr($dir, 0, strpos($dir, '/admin'));
+    } elseif (strpos($dir, '/auth') !== false) {
+        $project_path = substr($dir, 0, strpos($dir, '/auth'));
+    } else {
+        $project_path = rtrim($dir, '/');
+    }
+    
+    return $protocol . '://' . $host . $project_path;
 }
 
 /**

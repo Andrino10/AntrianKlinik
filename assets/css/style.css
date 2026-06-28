@@ -538,6 +538,14 @@ canvas {
     color: var(--text-light);
 }
 
+.queue-table-container { overflow-x: auto; }
+.queue-table { min-width: 980px; }
+.queue-table th, .queue-table td { vertical-align: top; font-size: 13px; }
+.queue-actions { min-width: 260px; }
+.queue-actions .btn { margin: 0 4px 5px 0; }
+.queue-empty { padding: 18px; color: var(--text-light); background: #f9f9f9; border-radius: 6px; }
+.update-time { color: var(--text-light); font-size: 13px; margin-bottom: 20px; }
+
 /* ===== FOOTER ===== */
 .footer {
     background: var(--dark);
